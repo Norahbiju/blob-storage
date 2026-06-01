@@ -1,0 +1,44 @@
+<%- include('partials/header') %>
+
+<section class="login-layout">
+  <div class="login-panel">
+    <p class="eyebrow">Secure insurance portal</p>
+    <h1>Claim tracking with admin feedback in one place.</h1>
+    <p class="muted">Use the demo accounts below, then replace them with production identity when you are ready.</p>
+    <div class="credential-grid">
+      <div>
+        <span>User</span>
+        <strong>user / user123</strong>
+      </div>
+      <div>
+        <span>Admin</span>
+        <strong>admin / admin123</strong>
+      </div>
+    </div>
+  </div>
+
+  <form class="auth-card" method="post" action="/login">
+    <h2>Sign in</h2>
+    <% if (error) { %>
+      <div class="alert"><%= error %></div>
+    <% } %>
+    <label>
+      Role
+      <select name="role" required>
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+    </label>
+    <label>
+      Username
+      <input name="username" autocomplete="username" required>
+    </label>
+    <label>
+      Password
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button class="primary-button" type="submit">Sign in</button>
+  </form>
+</section>
+
+<%- include('partials/footer') %>

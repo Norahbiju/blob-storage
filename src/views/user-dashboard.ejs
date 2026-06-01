@@ -1,0 +1,69 @@
+<%- include('partials/header') %>
+
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">User dashboard</p>
+    <h1>Welcome, <%= currentUser.name %></h1>
+    <p class="muted">Submit claims, track uploaded documents, and review admin feedback.</p>
+  </div>
+  <a class="primary-button link-button" href="/claims/new">New claim</a>
+</section>
+
+<section class="stat-row">
+  <div class="stat">
+    <span>Total claims</span>
+    <strong><%= claims.length %></strong>
+  </div>
+  <div class="stat">
+    <span>With feedback</span>
+    <strong><%= claims.filter(claim => claim.adminFeedback).length %></strong>
+  </div>
+  <div class="stat">
+    <span>Uploaded files</span>
+    <strong><%= claims.filter(claim => claim.uploadedFile).length %></strong>
+  </div>
+</section>
+
+<section class="table-panel">
+  <div class="section-title">
+    <h2>Your claims</h2>
+  </div>
+  <% if (!claims.length) { %>
+    <div class="empty">No claims submitted yet.</div>
+  <% } else { %>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Policy</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Document</th>
+            <th>Admin feedback</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% claims.forEach((claim) => { %>
+            <tr>
+              <td><%= claim.policyNumber %></td>
+              <td><%= claim.claimType %></td>
+              <td>$<%= Number(claim.claimAmount).toLocaleString() %></td>
+              <td><span class="pill"><%= claim.status %></span></td>
+              <td>
+                <% if (claim.uploadedFile) { %>
+                  <a href="/files/<%= claim.userId %>/<%= claim.claimId %>"><%= claim.uploadedFile.originalName %></a>
+                <% } else { %>
+                  <span class="muted">None</span>
+                <% } %>
+              </td>
+              <td><%= claim.adminFeedback || 'Awaiting review' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/footer') %>

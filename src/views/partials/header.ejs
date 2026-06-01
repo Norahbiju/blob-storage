@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Insurance Claims Portal</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/">Aegis Claims</a>
+      <% if (currentUser) { %>
+        <nav class="nav">
+          <% if (currentUser.role === 'admin') { %>
+            <a href="/admin">Admin</a>
+          <% } else { %>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/claims/new">New Claim</a>
+          <% } %>
+          <form method="post" action="/logout">
+            <button class="ghost-button" type="submit">Sign out</button>
+          </form>
+        </nav>
+      <% } %>
+    </header>
+    <main class="shell">

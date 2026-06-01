@@ -1,0 +1,54 @@
+<%- include('partials/header') %>
+
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Claim review</p>
+    <h1><%= claim.policyNumber %></h1>
+    <p class="muted">Submitted by <%= claim.userName %> on <%= new Date(claim.createdAt).toLocaleString() %></p>
+  </div>
+</section>
+
+<section class="review-layout">
+  <div class="table-panel details-panel">
+    <h2>Claim details</h2>
+    <dl>
+      <div><dt>Claim type</dt><dd><%= claim.claimType %></dd></div>
+      <div><dt>Incident date</dt><dd><%= claim.incidentDate %></dd></div>
+      <div><dt>Amount</dt><dd>$<%= Number(claim.claimAmount).toLocaleString() %></dd></div>
+      <div><dt>Contact</dt><dd><%= claim.contactNumber %></dd></div>
+      <div><dt>Description</dt><dd><%= claim.description %></dd></div>
+      <div>
+        <dt>Document</dt>
+        <dd>
+          <% if (claim.uploadedFile) { %>
+            <a href="/files/<%= claim.userId %>/<%= claim.claimId %>"><%= claim.uploadedFile.originalName %></a>
+          <% } else { %>
+            None
+          <% } %>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <form class="form-panel" method="post" action="/admin/claims/<%= claim.userId %>/<%= claim.claimId %>/feedback">
+    <h2>Admin feedback</h2>
+    <label>
+      Status
+      <select name="status" required>
+        <% ['Submitted', 'In Review', 'Approved', 'Rejected', 'Need More Information'].forEach((status) => { %>
+          <option value="<%= status %>" <%= claim.status === status ? 'selected' : '' %>><%= status %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>
+      Feedback
+      <textarea name="adminFeedback" rows="8"><%= claim.adminFeedback %></textarea>
+    </label>
+    <div class="actions">
+      <a class="secondary-button link-button" href="/admin">Back</a>
+      <button class="primary-button" type="submit">Save feedback</button>
+    </div>
+  </form>
+</section>
+
+<%- include('partials/footer') %>

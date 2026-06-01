@@ -1,0 +1,53 @@
+<%- include('partials/header') %>
+
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">New claim</p>
+    <h1>Submit insurance claim</h1>
+  </div>
+</section>
+
+<form class="form-panel" method="post" action="/claims" enctype="multipart/form-data">
+  <div class="form-grid">
+    <label>
+      Policy number
+      <input name="policyNumber" placeholder="POL-102938" required>
+    </label>
+    <label>
+      Claim type
+      <select name="claimType" required>
+        <option value="Health">Health</option>
+        <option value="Vehicle">Vehicle</option>
+        <option value="Property">Property</option>
+        <option value="Travel">Travel</option>
+        <option value="Life">Life</option>
+      </select>
+    </label>
+    <label>
+      Incident date
+      <input name="incidentDate" type="date" required>
+    </label>
+    <label>
+      Claim amount
+      <input name="claimAmount" type="number" min="0" step="0.01" required>
+    </label>
+    <label>
+      Contact number
+      <input name="contactNumber" required>
+    </label>
+    <label>
+      Supporting document
+      <input name="document" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
+    </label>
+  </div>
+  <label>
+    Description
+    <textarea name="description" rows="6" required></textarea>
+  </label>
+  <div class="actions">
+    <a class="secondary-button link-button" href="/dashboard">Cancel</a>
+    <button class="primary-button" type="submit">Submit claim</button>
+  </div>
+</form>
+
+<%- include('partials/footer') %>

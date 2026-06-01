@@ -1,0 +1,7 @@
+node_modules/
+.env
+azure/.env.azure
+.local-storage/
+npm-debug.log*
+azure/*.zip
+azure/certs/
