@@ -1,0 +1,24 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "<storage account connection string>",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "COSMOS_DB_ENDPOINT": "<cosmos account endpoint>",
+    "COSMOS_DB_KEY": "<cosmos account key>",
+    "COSMOS_DB_DATABASE_NAME": "insurance-claims",
+    "COSMOS_DB_CONTAINER_NAME": "claims",
+    "AZURE_STORAGE_CONNECTION_STRING": "<storage account connection string>",
+    "AZURE_STORAGE_CONTAINER_NAME": "insurance-documents",
+    "AZURE_STORAGE_STAGING_CONTAINER_NAME": "insurance-documents-staging",
+    "OCR_SPACE_API_KEY": "<ocr.space api key>",
+    "OCR_SPACE_API_URL": "https://api.ocr.space/parse/image",
+    "SERVICE_BUS_CONNECTION": "<service bus connection string>",
+    "SERVICE_BUS_MAIL_QUEUE_NAME": "claim-validation-mails",
+    "SMTP_HOST": "<smtp host>",
+    "SMTP_PORT": "587",
+    "SMTP_SECURE": "false",
+    "SMTP_USER": "<smtp user>",
+    "SMTP_PASS": "<smtp password>",
+    "EMAIL_FROM": "claims@example.com"
+  }
+}

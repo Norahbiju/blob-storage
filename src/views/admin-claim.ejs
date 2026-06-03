@@ -22,8 +22,29 @@
         <dd>
           <% if (claim.uploadedFile) { %>
             <a href="/files/<%= claim.userId %>/<%= claim.claimId %>"><%= claim.uploadedFile.originalName %></a>
+          <% } else if (claim.stagedFile && claim.validation && claim.validation.status === 'pending') { %>
+            Awaiting validation
           <% } else { %>
             None
+          <% } %>
+        </dd>
+      </div>
+      <div>
+        <dt>Validation</dt>
+        <dd>
+          <% if (claim.validation && claim.validation.status) { %>
+            <span class="pill"><%= claim.validation.status %></span>
+            <% if (claim.validation.checkedAt) { %>
+              <div class="muted">Checked <%= new Date(claim.validation.checkedAt).toLocaleString() %></div>
+            <% } %>
+            <% if (claim.validation.errors && claim.validation.errors.length) { %>
+              <div class="muted"><%= claim.validation.errors.join('; ') %></div>
+            <% } %>
+            <% if (claim.validation.extractedTextPreview) { %>
+              <pre class="ocr-preview"><%= claim.validation.extractedTextPreview %></pre>
+            <% } %>
+          <% } else { %>
+            Not requested
           <% } %>
         </dd>
       </div>
@@ -35,7 +56,7 @@
     <label>
       Status
       <select name="status" required>
-        <% ['Submitted', 'In Review', 'Approved', 'Rejected', 'Need More Information'].forEach((status) => { %>
+        <% ['PendingValidation', 'ValidationPassed', 'ValidationFailed', 'Submitted', 'In Review', 'Approved', 'Rejected', 'Need More Information'].forEach((status) => { %>
           <option value="<%= status %>" <%= claim.status === status ? 'selected' : '' %>><%= status %></option>
         <% }) %>
       </select>

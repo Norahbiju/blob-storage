@@ -373,6 +373,18 @@ th {
   margin: 0;
 }
 
+.ocr-preview {
+  max-height: 180px;
+  overflow: auto;
+  margin: 12px 0 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  background: #07131e;
+  white-space: pre-wrap;
+}
+
 .error-panel {
   max-width: 720px;
   margin: 10vh auto 0;

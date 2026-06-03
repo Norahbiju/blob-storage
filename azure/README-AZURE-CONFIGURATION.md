@@ -17,13 +17,16 @@ Browser
   -> Public IP address
   -> Azure Application Gateway with WAF
   -> Azure App Service running the Node.js application
+  -> Azure Functions for document OCR validation and email queue processing
   -> Azure Cosmos DB for application data
-  -> Azure Blob Storage for uploaded documents
+  -> Azure Blob Storage staging container for uploaded documents awaiting validation
+  -> Azure Blob Storage final container for validated documents
+  -> Azure Service Bus Queue for validation email messages
   -> Azure Key Vault for secrets
   -> Application Insights and Log Analytics for monitoring
 ```
 
-The Application Gateway is the intended public entry point. The App Service runs the application code. Cosmos DB stores user and claim records. Blob Storage stores uploaded claim documents. Key Vault stores secret values used by the application. Application Insights and Log Analytics collect telemetry, logs, and diagnostics.
+The Application Gateway is the intended public entry point. The App Service runs the application code and stages uploaded documents. Azure Functions call OCR.Space, validate extracted data, promote approved documents to the final Blob container, delete staged blobs after processing, and enqueue email notifications. Cosmos DB stores user and claim records. Blob Storage stores staged and validated claim documents. Azure Service Bus uses a queue, not a topic/subscription model, for validation email messages. Key Vault stores secret values used by the application. Application Insights and Log Analytics collect telemetry, logs, and diagnostics.
 
 ## Resource Inventory
 
@@ -35,6 +38,9 @@ The Application Gateway is the intended public entry point. The App Service runs
 | Application Insights | `appi-insclaims-prod` | East US |
 | Cosmos DB account | `cosmos-insclaims-de6d42` | East US |
 | Storage account | `stinsclaimsde6d42` | East US |
+| Function App | `func-insclaims-prod` | East US |
+| Service Bus namespace | `sb-insclaims-prod` | East US |
+| Service Bus queue | `claim-validation-mails` | East US |
 | Key Vault | `kv-insclaims-de6d42` | East US |
 | App Service Plan | `asp-insclaims-prod` | West US 2 |
 | App Service | `app-insclaims-de6d42` | West US 2 |
@@ -245,6 +251,7 @@ Blob Storage:
 ```text
 AZURE_STORAGE_CONNECTION_STRING
 AZURE_STORAGE_CONTAINER_NAME
+AZURE_STORAGE_STAGING_CONTAINER_NAME
 ```
 
 Authentication/session values:
@@ -351,26 +358,114 @@ Name: stinsclaimsde6d42
 Region: East US
 ```
 
-The intended blob container is:
+The intended final blob container is:
 
 ```text
 insurance-documents
 ```
 
-The app uses Blob Storage for uploaded claim documents. Uploaded files are expected to be organized under paths similar to:
+The intended staging blob container is:
+
+```text
+insurance-documents-staging
+```
+
+The app uploads user documents to the staging container first. Uploaded staged files are expected to be organized under paths similar to:
 
 ```text
 uploads/{userId}/{claimId}/
 ```
+
+The document validation Function is triggered by staged blobs. If OCR extraction and validation pass, the Function uploads the document to the final `insurance-documents` container using the same `uploads/{userId}/{claimId}/...` blob name and updates the claim metadata. If validation fails, the document is not copied to the final container.
+
+The Function deletes the staged blob after both passed and failed validation. Add a Storage lifecycle management rule for `insurance-documents-staging` to delete blobs older than 1 day as a safety net for interrupted executions.
 
 The app connects to storage using:
 
 ```text
 AZURE_STORAGE_CONNECTION_STRING
 AZURE_STORAGE_CONTAINER_NAME
+AZURE_STORAGE_STAGING_CONTAINER_NAME
 ```
 
 For stronger production security, the app should eventually use managed identity with Blob Storage RBAC instead of a storage account connection string.
+
+## Azure Functions
+
+The Function App should run the code in the repository `functions` folder.
+
+It contains:
+
+```text
+DocumentValidationFunction
+MailQueueFunction
+```
+
+`DocumentValidationFunction` is triggered by staged blobs:
+
+```text
+insurance-documents-staging/uploads/{userId}/{claimId}/{fileName}
+```
+
+It performs this workflow:
+
+```text
+1. Load claim metadata from Cosmos DB.
+2. Send the staged document to OCR.Space.
+3. Validate extracted OCR text against the submitted claim data.
+4. If validation passes, write the document to insurance-documents.
+5. If validation fails, leave the final container unchanged.
+6. Update the claim validation status in Cosmos DB.
+7. Send one email notification message to the Service Bus queue.
+8. Delete the staged blob.
+```
+
+The current validation checks:
+
+```text
+Readable OCR text
+Supported MIME type: PDF, PNG, JPEG
+Policy number present in OCR text
+Claim amount present in OCR text
+Contact number present in OCR text
+```
+
+`MailQueueFunction` is triggered by the Service Bus queue and sends the pass/fail email through SMTP.
+
+Required Function App settings:
+
+```text
+AzureWebJobsStorage
+FUNCTIONS_WORKER_RUNTIME=node
+COSMOS_DB_ENDPOINT
+COSMOS_DB_KEY
+COSMOS_DB_DATABASE_NAME
+COSMOS_DB_CONTAINER_NAME
+AZURE_STORAGE_CONNECTION_STRING
+AZURE_STORAGE_CONTAINER_NAME
+AZURE_STORAGE_STAGING_CONTAINER_NAME
+OCR_SPACE_API_KEY
+OCR_SPACE_API_URL
+SERVICE_BUS_CONNECTION
+SERVICE_BUS_MAIL_QUEUE_NAME
+SMTP_HOST
+SMTP_PORT
+SMTP_SECURE
+SMTP_USER
+SMTP_PASS
+EMAIL_FROM
+```
+
+## Azure Service Bus
+
+Use a queue-based model:
+
+```text
+Namespace: sb-insclaims-prod
+Queue: claim-validation-mails
+```
+
+Do not create a Service Bus topic/subscription for this flow. The document validation Function sends a single message to `claim-validation-mails`, and the mail Function consumes from that same queue.
 
 ## Key Vault
 
@@ -389,6 +484,12 @@ cosmos-db-endpoint
 cosmos-db-key
 demo-admin-password
 demo-user-password
+email-from
+ocr-space-api-key
+service-bus-connection
+smtp-host
+smtp-pass
+smtp-user
 session-secret
 ```
 
@@ -536,11 +637,15 @@ Validate the application itself:
 1. Login as a demo user.
 2. Submit a claim.
 3. Upload a document.
-4. Login as admin.
-5. Confirm the claim is visible.
-6. Add admin feedback.
-7. Login as the user again.
-8. Confirm the feedback is visible.
+4. Confirm the claim initially shows PendingValidation.
+5. Wait for the Azure Function to process the staged document.
+6. Confirm validation changes to passed or failed.
+7. If validation passed, confirm the document download link is visible.
+8. Login as admin.
+9. Confirm the claim and validation details are visible.
+10. Add admin feedback.
+11. Login as the user again.
+12. Confirm the feedback is visible.
 ```
 
 ### Data Checks
@@ -561,6 +666,15 @@ Blob Storage:
 stinsclaimsde6d42
   -> Containers
   -> insurance-documents
+  -> insurance-documents-staging
+```
+
+Expected Blob state:
+
+```text
+Passed validation: final blob exists in insurance-documents, staged blob is deleted
+Failed validation: no final blob exists, staged blob is deleted
+Interrupted run: lifecycle policy deletes old staged blobs
 ```
 
 ## Current Gaps And Recommended Hardening
@@ -588,4 +702,3 @@ rg-insclaims-prod
 ```
 
 Deleting the resource group removes the App Service, Application Gateway, Cosmos DB account, Storage Account, Key Vault, networking resources, logs, and uploaded files.
-

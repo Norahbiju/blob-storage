@@ -1,0 +1,19 @@
+[
+  { "name": "NODE_ENV", "value": "production", "slotSetting": false },
+  { "name": "WEBSITE_NODE_DEFAULT_VERSION", "value": "~22", "slotSetting": false },
+  { "name": "COSMOS_DB_ENDPOINT", "value": "@Microsoft.KeyVault(VaultName=kv-insurance-4rwl6d;SecretName=cosmos-db-endpoint)", "slotSetting": false },
+  { "name": "COSMOS_DB_KEY", "value": "@Microsoft.KeyVault(VaultName=kv-insurance-4rwl6d;SecretName=cosmos-db-key)", "slotSetting": false },
+  { "name": "COSMOS_DB_DATABASE_NAME", "value": "insurance-claims", "slotSetting": false },
+  { "name": "COSMOS_DB_CONTAINER_NAME", "value": "claims", "slotSetting": false },
+  { "name": "AZURE_STORAGE_CONNECTION_STRING", "value": "@Microsoft.KeyVault(VaultName=kv-insurance-4rwl6d;SecretName=azure-storage-connection-string)", "slotSetting": false },
+  { "name": "AZURE_STORAGE_CONTAINER_NAME", "value": "insurance-documents", "slotSetting": false },
+  { "name": "AZURE_STORAGE_STAGING_CONTAINER_NAME", "value": "insurance-documents-staging", "slotSetting": false },
+  { "name": "SESSION_SECRET", "value": "@Microsoft.KeyVault(VaultName=kv-insurance-4rwl6d;SecretName=session-secret)", "slotSetting": false },
+  { "name": "DEMO_USER_PASSWORD", "value": "@Microsoft.KeyVault(VaultName=kv-insurance-4rwl6d;SecretName=demo-user-password)", "slotSetting": false },
+  { "name": "DEMO_ADMIN_PASSWORD", "value": "@Microsoft.KeyVault(VaultName=kv-insurance-4rwl6d;SecretName=demo-admin-password)", "slotSetting": false },
+  { "name": "DEMO_USER_EMAIL", "value": "@Microsoft.KeyVault(VaultName=kv-insurance-4rwl6d;SecretName=demo-user-email)", "slotSetting": false },
+  { "name": "DEMO_ADMIN_EMAIL", "value": "@Microsoft.KeyVault(VaultName=kv-insurance-4rwl6d;SecretName=demo-admin-email)", "slotSetting": false },
+  { "name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "@Microsoft.KeyVault(VaultName=kv-insurance-4rwl6d;SecretName=applicationinsights-connection-string)", "slotSetting": false },
+  { "name": "SCM_DO_BUILD_DURING_DEPLOYMENT", "value": "true", "slotSetting": false },
+  { "name": "WEBSITE_RUN_FROM_PACKAGE", "value": "0", "slotSetting": false }
+]

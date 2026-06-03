@@ -1,0 +1,30 @@
+{
+  "properties": {
+    "policy": {
+      "rules": [
+        {
+          "enabled": true,
+          "name": "delete-old-staging-documents",
+          "type": "Lifecycle",
+          "definition": {
+            "actions": {
+              "baseBlob": {
+                "delete": {
+                  "daysAfterModificationGreaterThan": 1
+                }
+              }
+            },
+            "filters": {
+              "blobTypes": [
+                "blockBlob"
+              ],
+              "prefixMatch": [
+                "insurance-documents-staging/uploads/"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

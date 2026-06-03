@@ -1,0 +1,8 @@
+{
+    "properties":  {
+                       "WorkspaceResourceId":  "/subscriptions/de6d42ab-61dd-4743-a7de-166cd3281198/resourceGroups/rg-insurance-prod-cin/providers/Microsoft.OperationalInsights/workspaces/log-insurance-prod-cin",
+                       "Application_Type":  "web"
+                   },
+    "location":  "centralindia",
+    "kind":  "web"
+}

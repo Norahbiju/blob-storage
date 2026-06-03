@@ -19,7 +19,7 @@
     <strong><%= claims.filter(claim => claim.adminFeedback).length %></strong>
   </div>
   <div class="stat">
-    <span>Uploaded files</span>
+    <span>Validated files</span>
     <strong><%= claims.filter(claim => claim.uploadedFile).length %></strong>
   </div>
 </section>
@@ -39,6 +39,7 @@
             <th>Type</th>
             <th>Amount</th>
             <th>Status</th>
+            <th>Validation</th>
             <th>Document</th>
             <th>Admin feedback</th>
           </tr>
@@ -51,8 +52,20 @@
               <td>$<%= Number(claim.claimAmount).toLocaleString() %></td>
               <td><span class="pill"><%= claim.status %></span></td>
               <td>
+                <% if (claim.validation && claim.validation.status) { %>
+                  <span class="pill"><%= claim.validation.status %></span>
+                  <% if (claim.validation.errors && claim.validation.errors.length) { %>
+                    <div class="muted"><%= claim.validation.errors.join('; ') %></div>
+                  <% } %>
+                <% } else { %>
+                  <span class="muted">Not requested</span>
+                <% } %>
+              </td>
+              <td>
                 <% if (claim.uploadedFile) { %>
                   <a href="/files/<%= claim.userId %>/<%= claim.claimId %>"><%= claim.uploadedFile.originalName %></a>
+                <% } else if (claim.stagedFile && claim.validation && claim.validation.status === 'pending') { %>
+                  <span class="muted">Awaiting validation</span>
                 <% } else { %>
                   <span class="muted">None</span>
                 <% } %>

@@ -102,9 +102,13 @@ app.post('/claims', requireRole('user'), upload.single('document'), async (req, 
   try {
     const claimId = uuidv4();
     const user = req.session.user;
-    const uploadedFile = req.file
-      ? await storage.saveUploadedFile(user.id, claimId, req.file)
-      : null;
+
+    if (!req.file) {
+      return res.status(400).render('error', { message: 'A supporting document is required for validation.' });
+    }
+
+    const stagedFile = await storage.saveStagedUploadedFile(user.id, claimId, req.file);
+    const now = new Date().toISOString();
 
     const claim = {
       claimId,
@@ -117,11 +121,19 @@ app.post('/claims', requireRole('user'), upload.single('document'), async (req, 
       claimAmount: Number(req.body.claimAmount || 0),
       contactNumber: req.body.contactNumber,
       description: req.body.description,
-      uploadedFile,
-      status: 'Submitted',
+      stagedFile,
+      uploadedFile: null,
+      status: 'PendingValidation',
+      validation: {
+        status: 'pending',
+        requestedAt: now,
+        checkedAt: null,
+        errors: [],
+        extractedTextPreview: ''
+      },
       adminFeedback: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: now,
+      updatedAt: now
     };
 
     await storage.saveClaim(user.id, claim);

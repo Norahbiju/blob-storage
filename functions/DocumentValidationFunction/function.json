@@ -1,0 +1,18 @@
+{
+  "bindings": [
+    {
+      "name": "document",
+      "type": "blobTrigger",
+      "direction": "in",
+      "path": "%AZURE_STORAGE_STAGING_CONTAINER_NAME%/uploads/{userId}/{claimId}/{fileName}",
+      "connection": "AzureWebJobsStorage"
+    },
+    {
+      "name": "mailMessage",
+      "type": "serviceBus",
+      "direction": "out",
+      "queueName": "%SERVICE_BUS_MAIL_QUEUE_NAME%",
+      "connection": "SERVICE_BUS_CONNECTION"
+    }
+  ]
+}

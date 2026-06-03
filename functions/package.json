@@ -1,0 +1,18 @@
+{
+  "name": "insurance-claims-functions",
+  "version": "1.0.0",
+  "description": "Azure Functions for claim document OCR validation and email queue processing.",
+  "private": true,
+  "scripts": {
+    "start": "func start",
+    "check": "node --check DocumentValidationFunction/index.js && node --check MailQueueFunction/index.js"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.3.0",
+    "@azure/storage-blob": "^12.27.0",
+    "nodemailer": "^6.9.16"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

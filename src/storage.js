@@ -14,6 +14,7 @@ const seedUsers = [
     username: 'user',
     passwordEnv: 'DEMO_USER_PASSWORD',
     defaultPassword: 'user123',
+    emailEnv: 'DEMO_USER_EMAIL',
     role: 'user',
     name: 'Demo User',
     email: 'user@example.com'
@@ -25,6 +26,7 @@ const seedUsers = [
     username: 'admin',
     passwordEnv: 'DEMO_ADMIN_PASSWORD',
     defaultPassword: 'admin123',
+    emailEnv: 'DEMO_ADMIN_EMAIL',
     role: 'admin',
     name: 'Claims Admin',
     email: 'admin@example.com'
@@ -34,9 +36,12 @@ const seedUsers = [
 class ClaimRepository {
   constructor() {
     this.blobContainerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'insurance-documents';
+    this.stagingBlobContainerName =
+      process.env.AZURE_STORAGE_STAGING_CONTAINER_NAME || 'insurance-documents-staging';
     this.blobConnectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
     this.isBlobAzure = Boolean(this.blobConnectionString);
     this.blobContainerClient = null;
+    this.stagingBlobContainerClient = null;
 
     this.cosmosEndpoint = process.env.COSMOS_DB_ENDPOINT;
     this.cosmosKey = process.env.COSMOS_DB_KEY;
@@ -56,12 +61,15 @@ class ClaimRepository {
   async initBlobStorage() {
     if (!this.isBlobAzure) {
       await fs.mkdir(this.localPath('uploads'), { recursive: true });
+      await fs.mkdir(this.localStagingPath('uploads'), { recursive: true });
       return;
     }
 
     const serviceClient = BlobServiceClient.fromConnectionString(this.blobConnectionString);
     this.blobContainerClient = serviceClient.getContainerClient(this.blobContainerName);
+    this.stagingBlobContainerClient = serviceClient.getContainerClient(this.stagingBlobContainerName);
     await this.blobContainerClient.createIfNotExists();
+    await this.stagingBlobContainerClient.createIfNotExists();
   }
 
   async initMetadataStore() {
@@ -92,10 +100,12 @@ class ClaimRepository {
       const existingUser = await this.findUser(user.username, user.role);
       const seededUser = {
         ...user,
-        password: process.env[user.passwordEnv] || user.defaultPassword
+        password: process.env[user.passwordEnv] || user.defaultPassword,
+        email: process.env[user.emailEnv] || user.email
       };
       delete seededUser.passwordEnv;
       delete seededUser.defaultPassword;
+      delete seededUser.emailEnv;
 
       if (!existingUser) {
         await this.saveUser(seededUser);
@@ -218,6 +228,22 @@ class ClaimRepository {
     };
   }
 
+  async saveStagedUploadedFile(userId, claimId, file) {
+    const safeName = file.originalname.replace(/[^\w.\- ]/g, '_');
+    const blobName = `uploads/${userId}/${claimId}/${Date.now()}-${safeName}`;
+    await this.writeStagingBlob(blobName, file.buffer, file.mimetype, {
+      userId,
+      claimId,
+      originalName: file.originalname
+    });
+    return {
+      blobName,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size
+    };
+  }
+
   async getFile(blobName) {
     if (this.isBlobAzure) {
       const blockBlobClient = this.blobContainerClient.getBlockBlobClient(blobName);
@@ -256,6 +282,25 @@ class ClaimRepository {
     await fs.writeFile(fullPath, buffer);
   }
 
+  async writeStagingBlob(name, buffer, contentType, metadata = {}) {
+    if (this.isBlobAzure) {
+      const blockBlobClient = this.stagingBlobContainerClient.getBlockBlobClient(name);
+      await blockBlobClient.uploadData(buffer, {
+        blobHTTPHeaders: { blobContentType: contentType },
+        metadata: Object.fromEntries(
+          Object.entries(metadata)
+            .filter(([, value]) => value !== undefined && value !== null)
+            .map(([key, value]) => [key, String(value)])
+        )
+      });
+      return;
+    }
+
+    const fullPath = this.localStagingPath(name);
+    await fs.mkdir(path.dirname(fullPath), { recursive: true });
+    await fs.writeFile(fullPath, buffer);
+  }
+
   async queryCosmos(queryText, parameters) {
     const { resources } = await this.cosmosContainer.items
       .query({ query: queryText, parameters })
@@ -279,6 +324,10 @@ class ClaimRepository {
 
   localPath(name) {
     return path.join(localRoot, ...name.split('/'));
+  }
+
+  localStagingPath(name) {
+    return path.join(localRoot, 'staging', ...name.split('/'));
   }
 }
 

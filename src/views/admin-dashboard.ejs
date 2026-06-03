@@ -18,8 +18,8 @@
     <strong><%= claims.length %></strong>
   </div>
   <div class="stat">
-    <span>Reviewed</span>
-    <strong><%= claims.filter(claim => claim.status !== 'Submitted').length %></strong>
+    <span>Validated</span>
+    <strong><%= claims.filter(claim => claim.validation && claim.validation.status === 'passed').length %></strong>
   </div>
 </section>
 
@@ -54,6 +54,7 @@
               <th>Policy</th>
               <th>Type</th>
               <th>Status</th>
+              <th>Validation</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -64,6 +65,7 @@
                 <td><%= claim.policyNumber %></td>
                 <td><%= claim.claimType %></td>
                 <td><span class="pill"><%= claim.status %></span></td>
+                <td><span class="pill"><%= claim.validation && claim.validation.status ? claim.validation.status : 'none' %></span></td>
                 <td><a href="/admin/claims/<%= claim.userId %>/<%= claim.claimId %>">Review</a></td>
               </tr>
             <% }) %>
